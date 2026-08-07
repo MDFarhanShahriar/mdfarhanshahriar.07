@@ -411,10 +411,10 @@
   .credential-card{border:1px solid var(--rule);background:var(--surface);padding:24px;}
   .credential-card h4{font-family:'Fraunces',serif;font-size:1.05rem;margin:0 0 14px;font-weight:600;}
   .credential-card dl{margin:0;}
-  .credential-card dl div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;border-bottom:1px dashed var(--rule);padding:9px 0;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
+  .credential-card dl div{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-bottom:1px dashed var(--rule);padding:9px 0;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
   .credential-card dl div:last-child{border-bottom:none;padding-bottom:0;}
   .credential-card dl dt{color:var(--gold);text-transform:uppercase;font-size:0.68rem;letter-spacing:0.06em;margin:0;flex-shrink:0;}
-  .credential-card dl dd{margin:0;text-align:right;color:var(--text);}
+  .credential-card dl dd{margin:0;text-align:left;color:var(--text);}
   .credential-card ul{list-style:none;margin:0;padding:0;}
   .credential-card ul li{font-family:'IBM Plex Mono',monospace;font-size:0.85rem;padding:9px 0;border-bottom:1px dashed var(--rule);}
   .credential-card ul li:last-child{border-bottom:none;padding-bottom:0;}
@@ -451,11 +451,6 @@
   footer .corrections-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;}
   footer .corrections-list li{opacity:0.8;}
   footer .corrections-list .c-date{color:var(--gold);margin-right:6px;}
-
-  @media (max-width:560px){
-    .credential-card dl div{flex-direction:column;align-items:flex-start;gap:3px;}
-    .credential-card dl dd{text-align:left;}
-  }
 
   /* ---------- SMALL PHONES ---------- */
   @media (max-width:480px){
