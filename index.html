@@ -1020,52 +1020,77 @@
       return data;
     }
 
-    function arrayBufferToBase64(buffer){
-      var bytes = new Uint8Array(buffer);
-      var binary = '';
-      var chunk = 0x8000;
-      for(var i=0; i<bytes.length; i+=chunk){
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+    function loadCanvasBengaliFont(){
+      if(!('FontFace' in window)){
+        return Promise.resolve(false);
       }
-      return btoa(binary);
-    }
-
-    function loadBengaliFont(doc){
-      var files = [
-        { url:'NotoSansBengali-Regular.ttf', vfs:'NotoSansBengali-Regular.ttf', style:'normal' },
-        { url:'NotoSansBengali-Bold.ttf',    vfs:'NotoSansBengali-Bold.ttf',    style:'bold'   }
-      ];
-      return Promise.all(files.map(function(f){
-        return fetch(f.url).then(function(res){
-          if(!res.ok) throw new Error('font fetch failed: ' + f.url);
-          return res.arrayBuffer();
-        }).then(function(buf){
-          var b64 = arrayBufferToBase64(buf);
-          doc.addFileToVFS(f.vfs, b64);
-          doc.addFont(f.vfs, 'NotoBengali', f.style);
-        });
-      })).then(function(){ return true; }).catch(function(err){
-        console.warn('Bengali font unavailable, falling back to Latin-only PDF text:', err);
+      return Promise.all([
+        fetch('NotoSansBengali-Regular.ttf').then(function(r){ if(!r.ok) throw new Error('regular fetch failed'); return r.arrayBuffer(); }),
+        fetch('NotoSansBengali-Bold.ttf').then(function(r){ if(!r.ok) throw new Error('bold fetch failed'); return r.arrayBuffer(); })
+      ]).then(function(bufs){
+        var normal = new FontFace('NBengaliCanvas', bufs[0], { weight:'400' });
+        var bold = new FontFace('NBengaliCanvas', bufs[1], { weight:'700' });
+        return Promise.all([normal.load(), bold.load()]);
+      }).then(function(loaded){
+        loaded.forEach(function(f){ document.fonts.add(f); });
+        return true;
+      }).catch(function(err){
+        console.warn('Bengali canvas font unavailable, falling back to Latin-only PDF text:', err);
         return false;
       });
     }
 
-    // Strips Bengali script characters when the Unicode font could not be loaded,
+    // Renders a Bengali-script text run to a PNG via <canvas>, so the browser's own
+    // text shaping (matra reordering, conjuncts) is used instead of jsPDF's naive
+    // glyph-by-glyph placement, which cannot shape complex scripts correctly.
+    function renderBengaliImage(segment, fontSizePt, bold, colorRGB){
+      var scale = 4;
+      var pxSize = fontSizePt * (96/72) * scale;
+      var fontStr = (bold ? '700 ' : '400 ') + pxSize + 'px NBengaliCanvas, sans-serif';
+
+      var probe = document.createElement('canvas').getContext('2d');
+      probe.font = fontStr;
+      var metrics = probe.measureText(segment);
+      var ascent = metrics.actualBoundingBoxAscent || pxSize * 0.85;
+      var descent = metrics.actualBoundingBoxDescent || pxSize * 0.25;
+      var padX = pxSize * 0.04;
+      var width = Math.max(1, Math.ceil(metrics.width + padX * 2));
+      var height = Math.max(1, Math.ceil(ascent + descent + pxSize * 0.08));
+
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      ctx.font = fontStr;
+      ctx.fillStyle = 'rgb(' + colorRGB.join(',') + ')';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(segment, padX, ascent);
+
+      var pxToPt = 1 / (scale * (96/72));
+      return {
+        dataUrl: canvas.toDataURL('image/png'),
+        widthPt: width * pxToPt,
+        heightPt: height * pxToPt,
+        ascentPt: ascent * pxToPt
+      };
+    }
+
+    // Strips Bengali script characters when the canvas font could not be loaded,
     // so text falls back cleanly to whatever Latin portion remains (e.g. "বাংলা — Name" -> "Name")
-    // instead of rendering as garbled boxes in the default PDF fonts.
-    function safeText(str, unicodeOK){
-      if(unicodeOK || !str) return str;
+    // instead of rendering as garbled or incorrectly-shaped text.
+    function safeText(str, bengaliOK){
+      if(bengaliOK || !str) return str;
       return str.replace(/[\u0980-\u09FF]/g,'')
                 .replace(/^[\s\u2014\u2013\-]+/,'')
                 .replace(/\s{2,}/g,' ')
                 .trim();
     }
 
-    function buildPDF(data, unicodeOK, existingDoc){
+    function buildPDF(data, bengaliOK, existingDoc){
       var jsPDF = window.jspdf.jsPDF;
       var doc = existingDoc || new jsPDF({ unit:'pt', format:'a4' });
-      var titleFont = unicodeOK ? 'NotoBengali' : 'times';
-      var textFont = unicodeOK ? 'NotoBengali' : 'helvetica';
+      var titleFont = 'times';
+      var textFont = 'helvetica';
       var pageW = doc.internal.pageSize.getWidth();
       var pageH = doc.internal.pageSize.getHeight();
       var margin = 48;
@@ -1073,7 +1098,7 @@
       var gold = [169,121,26];
       var ink = [32,28,20];
       var muted = [107,97,83];
-      function T(s){ return safeText(s, unicodeOK); }
+      function T(s){ return safeText(s, bengaliOK); }
 
       function ensureSpace(needed){
         if(y + needed > pageH - margin){
@@ -1096,12 +1121,35 @@
         y += 8;
         rule();
       }
+      // Draws a line that may mix Bengali and Latin text: Bengali runs are placed as
+      // shaped canvas images, Latin runs as normal selectable PDF text, left to right.
+      function drawMixedLine(str, fontSizePt, bold, color){
+        if(!bengaliOK || !/[\u0980-\u09FF]/.test(str)){
+          doc.setFont(textFont, bold ? 'bold' : 'normal');
+          doc.setFontSize(fontSizePt);
+          doc.setTextColor(color[0],color[1],color[2]);
+          doc.text(str, margin, y);
+          return;
+        }
+        var segments = str.split(/([\u0980-\u09FF]+)/).filter(function(s){ return s !== ''; });
+        var curX = margin;
+        segments.forEach(function(seg){
+          if(/[\u0980-\u09FF]/.test(seg)){
+            var img = renderBengaliImage(seg, fontSizePt, bold, color);
+            doc.addImage(img.dataUrl, 'PNG', curX, y - img.ascentPt, img.widthPt, img.heightPt);
+            curX += img.widthPt;
+          } else {
+            doc.setFont(textFont, bold ? 'bold' : 'normal');
+            doc.setFontSize(fontSizePt);
+            doc.setTextColor(color[0],color[1],color[2]);
+            doc.text(seg, curX, y);
+            curX += doc.getTextWidth(seg);
+          }
+        });
+      }
       function subheading(str){
         ensureSpace(16);
-        doc.setFont(textFont,'bold');
-        doc.setFontSize(10.5);
-        doc.setTextColor(ink[0],ink[1],ink[2]);
-        doc.text(T(str), margin, y);
+        drawMixedLine(str, 10.5, true, ink);
         y += 14;
       }
       function body(str, opts){
@@ -1181,10 +1229,10 @@
       setTimeout(function(){
         var jsPDF = window.jspdf.jsPDF;
         var doc = new jsPDF({ unit:'pt', format:'a4' });
-        loadBengaliFont(doc).then(function(unicodeOK){
+        loadCanvasBengaliFont().then(function(bengaliOK){
           try {
             var data = collectResumeData();
-            buildPDF(data, unicodeOK, doc);
+            buildPDF(data, bengaliOK, doc);
             doc.save('MD-Farhan-Shahriar-Resume.pdf');
           } catch(e){
             console.error('PDF generation failed:', e);
