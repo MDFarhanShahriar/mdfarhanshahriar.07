@@ -1346,7 +1346,10 @@
       }
 
       if(data.skills.length){
-        ornament();
+        // Force Skills (and, following it, Contact) onto a fresh page, so
+        // Education stays complete on its own page rather than splitting.
+        doc.addPage();
+        y = margin;
         heading('Skills', 'By category');
         data.skills.forEach(function(s){
           subheading(s.heading);
