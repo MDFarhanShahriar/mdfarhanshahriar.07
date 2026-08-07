@@ -94,11 +94,27 @@
     mix-blend-mode:screen;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.55  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     background-repeat:repeat;
+    animation:grain-flicker-dark 5.2s ease-in-out infinite;
   }
   html[data-theme="light"] body::before{
     opacity:0.38;
     mix-blend-mode:multiply;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.36  0 0 0 0 0.27  0 0 0 0 0.14  0 0 0 0.9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    animation:grain-flicker-light 5.2s ease-in-out infinite;
+  }
+  @keyframes grain-flicker-dark{
+    0%,100%{opacity:0.22;}
+    22%{opacity:0.17;}
+    38%{opacity:0.26;}
+    61%{opacity:0.19;}
+    80%{opacity:0.25;}
+  }
+  @keyframes grain-flicker-light{
+    0%,100%{opacity:0.38;}
+    22%{opacity:0.32;}
+    38%{opacity:0.43;}
+    61%{opacity:0.34;}
+    80%{opacity:0.41;}
   }
   body::after{
     content:"";
@@ -110,7 +126,73 @@
     mix-blend-mode:multiply;
   }
   html[data-theme="light"] body::after{background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(120,95,55,0.30) 100%);}
-  @media print{ body::before,body::after{ display:none; } }
+  @media print{ body::before,body::after{ display:none; animation:none; } }
+
+  /* ---------- INK ROLLER SWEEP ---------- */
+  .press-sweep{
+    position:fixed;inset:-20% -20%;z-index:1998;pointer-events:none;
+    background:linear-gradient(100deg,
+      transparent 42%,
+      rgba(201,162,39,0.05) 47%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(201,162,39,0.05) 53%,
+      transparent 58%);
+    transform:translateX(-60%);
+    animation:roller-sweep 15s linear infinite;
+  }
+  html[data-theme="light"] .press-sweep{
+    background:linear-gradient(100deg,
+      transparent 42%,
+      rgba(120,95,55,0.06) 47%,
+      rgba(255,255,255,0.10) 50%,
+      rgba(120,95,55,0.06) 53%,
+      transparent 58%);
+  }
+  @keyframes roller-sweep{
+    0%{transform:translateX(-60%);}
+    9%{transform:translateX(60%);}
+    100%{transform:translateX(60%);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    body::before,html[data-theme="light"] body::before{animation:none;}
+    .press-sweep{display:none;}
+  }
+  @media print{ .press-sweep{display:none;} }
+
+  /* ---------- PRINT MISREGISTRATION FLICKER ---------- */
+  .nameplate,.section-head h2{
+    animation:misregister 11s ease-in-out infinite;
+  }
+  .section-head h2{animation-delay:2.3s;}
+  @keyframes misregister{
+    0%,95%,100%{text-shadow:none;transform:translate(0,0);}
+    96%{text-shadow:-1.5px 0 rgba(198,54,42,0.55),1.5px 0 rgba(45,140,196,0.5);transform:translate(0.6px,0);}
+    97.5%{text-shadow:1.5px 0 rgba(198,54,42,0.5),-1.5px 0 rgba(45,140,196,0.45);transform:translate(-0.6px,0);}
+    99%{text-shadow:none;transform:translate(0,0);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .nameplate,.section-head h2{animation:none;}
+  }
+  @media print{ .nameplate,.section-head h2{animation:none;text-shadow:none;} }
+
+  /* ---------- LETTERPRESS IMPRESSION ON SCROLL ---------- */
+  .press-target{opacity:0;transform:translateY(10px) scale(0.98);}
+  .press-target.press-in{
+    animation:letterpress-in 0.7s cubic-bezier(.22,.8,.28,1) forwards;
+  }
+  @keyframes letterpress-in{
+    0%{opacity:0;transform:translateY(10px) scale(0.97);box-shadow:inset 0 3px 10px rgba(0,0,0,0.38);}
+    55%{opacity:1;transform:translateY(0) scale(1.005);box-shadow:inset 0 1px 3px rgba(0,0,0,0.15);}
+    100%{opacity:1;transform:translateY(0) scale(1);box-shadow:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .press-target{opacity:1;transform:none;}
+    .press-target.press-in{animation:none;}
+  }
+  @media print{
+    .press-target{opacity:1 !important;transform:none !important;animation:none !important;box-shadow:none !important;}
+  }
+
 
   /* ---------- LOADING SCREEN ---------- */
   #loading-screen{
@@ -508,6 +590,8 @@
 </style>
 </head>
 <body>
+
+<div class="press-sweep" aria-hidden="true"></div>
 
 <div id="loading-screen" role="status" aria-label="Loading">
   <div class="stamp-wrap">
@@ -1445,6 +1529,33 @@
         });
       }, 350);
     });
+  })();
+</script>
+
+<script>
+  (function(){
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var targets = document.querySelectorAll(
+      '.story, .credential-card, .skill-card, .brief, .contact-box'
+    );
+    if(!targets.length) return;
+    targets.forEach(function(el){ el.classList.add('press-target'); });
+
+    if(!('IntersectionObserver' in window)){
+      targets.forEach(function(el){ el.classList.add('press-in'); });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('press-in');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    targets.forEach(function(el){ observer.observe(el); });
   })();
 </script>
 
