@@ -120,22 +120,53 @@
     transition:opacity .5s ease, visibility .5s ease;
   }
   #loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
-  .loader-mark{
-    font-family:'Fraunces',serif;font-weight:700;
-    font-size:clamp(1.3rem,5vw,1.9rem);letter-spacing:0.02em;color:var(--text);
-    text-align:center;
-  }
   .loader-sub{
     font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;
     text-transform:uppercase;color:var(--muted);
   }
-  .loader-rule{width:150px;height:2px;background:var(--rule);position:relative;overflow:hidden;}
-  .loader-rule::after{
-    content:"";position:absolute;top:0;left:-40%;width:40%;height:100%;background:var(--gold);
-    animation:loader-sweep 1.1s ease-in-out infinite;
+  .stamp-wrap{position:relative;width:112px;height:112px;display:flex;align-items:center;justify-content:center;}
+  .stamp{
+    width:98px;height:98px;border-radius:50%;
+    border:3px double var(--gold);
+    color:var(--gold);
+    font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;letter-spacing:0.03em;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(201,162,39,0.35) inset;
+    transform:translateY(-46px) scale(1.35) rotate(-9deg);
+    opacity:0;
+    animation:stamp-drop 0.85s cubic-bezier(.22,.9,.32,1.25) forwards;
+    animation-delay:0.15s;
   }
-  @keyframes loader-sweep{0%{left:-40%;}100%{left:100%;}}
-  @media (prefers-reduced-motion: reduce){.loader-rule::after{animation:none;left:0;width:100%;}}
+  .stamp-ring{
+    position:absolute;inset:0;border-radius:50%;border:2px solid var(--gold);
+    opacity:0;transform:scale(0.7);
+    animation:stamp-ring 0.55s ease-out forwards;
+    animation-delay:0.85s;
+  }
+  .stamp-ring-loop{
+    position:absolute;inset:0;border-radius:50%;border:1px solid var(--gold);
+    opacity:0;
+    animation:stamp-ring-loop 2.4s ease-out infinite;
+    animation-delay:1.1s;
+  }
+  @keyframes stamp-drop{
+    0%{transform:translateY(-46px) scale(1.35) rotate(-9deg);opacity:0;}
+    55%{transform:translateY(3px) scale(0.94) rotate(-2deg);opacity:1;}
+    75%{transform:translateY(-3px) scale(1.04) rotate(-4deg);}
+    100%{transform:translateY(0) scale(1) rotate(-3deg);opacity:1;}
+  }
+  @keyframes stamp-ring{
+    0%{opacity:0.6;transform:scale(0.75);}
+    100%{opacity:0;transform:scale(1.55);}
+  }
+  @keyframes stamp-ring-loop{
+    0%{opacity:0.4;transform:scale(0.85);}
+    100%{opacity:0;transform:scale(1.6);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .stamp{animation:none;opacity:1;transform:rotate(-3deg);}
+    .stamp-ring,.stamp-ring-loop{display:none;}
+  }
   @media print{ #loading-screen{ display:none !important; } }
   a{color:inherit;}
   .mono{font-family:'IBM Plex Mono',monospace;}
@@ -484,9 +515,12 @@
 <body>
 
 <div id="loading-screen" role="status" aria-label="Loading">
-  <div class="loader-mark">MD. FARHAN SHAHRIAR</div>
+  <div class="stamp-wrap">
+    <div class="stamp-ring-loop"></div>
+    <div class="stamp-ring"></div>
+    <div class="stamp">MFS</div>
+  </div>
   <div class="loader-sub" id="loader-sub">Printing today's edition…</div>
-  <div class="loader-rule"></div>
 </div>
 
 <header class="masthead">
@@ -641,7 +675,7 @@
       </div>
       <div class="brief">
         <h4>Bangladesh Scouts — Rover Region</h4>
-        <p>Current member of Jashore District Rover, going on 2 years.</p>
+        <p id="rover-tenure">Current member of Jashore District Rover.</p>
       </div>
       <div class="brief">
         <h4>PRM &amp; ICT Taskforce</h4>
@@ -825,7 +859,7 @@
 
 <footer>
   © <span id="year"></span> MD. Farhan Shahriar · Jashore, Bangladesh · Printed daily on the web
-  <div class="corrections" id="corrections"></div>
+  <div class="corrections" id="corrections">Once printed, there's no fixing it 🙂</div>
 </footer>
 
 <script>
@@ -846,7 +880,7 @@
 
   (function(){
     var shownAt = Date.now();
-    var minDisplay = 700;
+    var minDisplay = 2000;
     var hidden = false;
     function finishInitialLoad(){
       if(hidden) return;
@@ -861,26 +895,6 @@
 
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // ---------- CORRECTIONS ----------
-  // Add a real, small, dated fix here whenever one happens.
-  // Newest entry first. Only the latest 3 show; older ones stay in the array as an archive.
-  const corrections = [
-    { date: '2026-08-06', text: 'Replaced the placeholder "none on file" line with this actual corrections log.' },
-  ];
-
-  (function renderCorrections(){
-    const el = document.getElementById('corrections');
-    if (!corrections.length){
-      el.textContent = 'Corrections: none on file for this edition.';
-      return;
-    }
-    const recent = corrections.slice(0, 3);
-    const items = recent.map(c =>
-      `<li><span class="c-date mono">${c.date}</span>${c.text}</li>`
-    ).join('');
-    el.innerHTML = `<div class="corrections-label mono">Corrections</div><ul class="corrections-list">${items}</ul>`;
-  })();
-
   function getJashoreNow(){
     // Asia/Dhaka is UTC+6 year-round, no DST — build a Date reflecting that local time
     var parts = new Intl.DateTimeFormat('en-CA', {
@@ -894,6 +908,30 @@
 
   var jashoreNow = getJashoreNow();
   document.getElementById('today-date').textContent = jashoreNow.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) + ' · Jashore Time';
+
+  (function(){
+    // Rover journey started 15 Sep 2025 — "going on" always names the unit
+    // currently in progress (not yet completed), same convention as before,
+    // just now broken down into years + months instead of years alone.
+    var ROVER_START = new Date('2025-09-15T00:00:00');
+    var el = document.getElementById('rover-tenure');
+    if(el){
+      var totalMonths = (jashoreNow.getFullYear() - ROVER_START.getFullYear()) * 12
+        + (jashoreNow.getMonth() - ROVER_START.getMonth())
+        - (jashoreNow.getDate() < ROVER_START.getDate() ? 1 : 0);
+      totalMonths = Math.max(totalMonths, 0);
+      var yearsCompleted = Math.floor(totalMonths / 12);
+      var monthInProgress = (totalMonths % 12) + 1;
+      var phrase;
+      if(yearsCompleted === 0){
+        phrase = 'going on ' + monthInProgress + (monthInProgress === 1 ? ' month.' : ' months.');
+      } else {
+        phrase = 'going on ' + yearsCompleted + (yearsCompleted === 1 ? ' year, ' : ' years, ')
+          + monthInProgress + (monthInProgress === 1 ? ' month.' : ' months.');
+      }
+      el.textContent = 'Current member of Jashore District Rover, ' + phrase;
+    }
+  })();
 
   (function(){
     var LAUNCH_DATE = new Date('2007-11-07T00:00:00');
@@ -1386,6 +1424,15 @@
     btn.addEventListener('click', function(){
       btn.disabled = true;
       Loader.show('Generating your edition…');
+      var genShownAt = Date.now();
+      var genMinDisplay = 2000;
+      function finishGeneration(){
+        var wait = Math.max(0, genMinDisplay - (Date.now() - genShownAt));
+        setTimeout(function(){
+          Loader.hide();
+          btn.disabled = false;
+        }, wait);
+      }
       setTimeout(function(){
         var jsPDF = window.jspdf.jsPDF;
         var doc = new jsPDF({ unit:'pt', format:'a4' });
@@ -1398,8 +1445,7 @@
             console.error('PDF generation failed:', e);
             alert('Could not generate the PDF. Please try again.');
           } finally {
-            Loader.hide();
-            btn.disabled = false;
+            finishGeneration();
           }
         });
       }, 350);
