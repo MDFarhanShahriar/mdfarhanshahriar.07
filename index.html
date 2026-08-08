@@ -300,6 +300,16 @@
     0%{transform:translate(-50%,-50%) scale(0.6);opacity:0.85;}
     100%{transform:translate(-50%,-50%) scale(3.2);opacity:0;}
   }
+  .ink-fleck{
+    position:fixed;width:2px;height:2px;border-radius:50%;
+    background:var(--gold);pointer-events:none;z-index:2650;
+    opacity:0.45;transform:scale(1);
+    animation:ink-fleck-fade 1s ease-out forwards;
+  }
+  @keyframes ink-fleck-fade{
+    0%{opacity:0.45;transform:scale(1);}
+    100%{opacity:0;transform:scale(0.3) translateY(4px);}
+  }
 
   /* ---------- MASTHEAD DATE STAMP PUNCH ---------- */
   #today-date.stamped{
@@ -835,7 +845,28 @@
     border-top:3px double var(--rule);padding:20px 0;text-align:center;
     font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);
   }
+  .almanac-strip{
+    border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+    background:var(--surface-2);
+    padding:10px 18px;text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:8px 10px;
+  }
+  .almanac-strip .almanac-label{
+    font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);
+  }
+  .almanac-strip .almanac-quote{
+    font-size:0.78rem;font-style:italic;color:var(--text-softer);
+  }
+  @media print{ .almanac-strip{display:none;} }
   footer .corrections{margin-top:10px;font-size:0.66rem;opacity:0.85;}
+  footer .cipher-mark{
+    display:inline-block;margin-left:8px;font-size:0.62rem;letter-spacing:0.05em;
+    opacity:0.5;cursor:help;border-bottom:1px dotted var(--rule);
+    transition:opacity .2s ease,color .2s ease;
+  }
+  footer .cipher-mark:hover,footer .cipher-mark:focus{opacity:0.9;color:var(--gold);outline:none;}
+  footer .cipher-mark.revealed{opacity:1;color:var(--gold);font-style:italic;}
   footer .corrections-label{letter-spacing:0.1em;text-transform:uppercase;opacity:0.9;}
   footer .corrections-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;}
   footer .corrections-list li{opacity:0.8;}
@@ -1262,8 +1293,14 @@
   </div>
 </section>
 
+<div class="almanac-strip" id="almanac-strip">
+  <span class="almanac-label">Today's Almanac</span>
+  <span class="almanac-quote" id="almanac-quote"></span>
+</div>
+
 <footer>
   © <span id="year"></span> MD. Farhan Shahriar · Jashore, Bangladesh · Printed daily on the web
+  <span class="cipher-mark" id="cipher-mark" data-cipher="VWLOO EXLOGLQJ DW PLGQLJKW" data-shift="3" tabindex="0" role="button" aria-label="Decode the printer's mark">VWLOO EXLOGLQJ DW PLGQLJKW</span>
   <div class="corrections" id="corrections">Once printed, there's no fixing it 🙂</div>
 </footer>
 
@@ -2058,6 +2095,90 @@
 </script>
 
 <script>
+  /* ---------- SPARSE INK TRAIL ON CURSOR MOVE ---------- */
+  (function(){
+    if(!window.matchMedia || !window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var lastX = null, lastY = null;
+    var minDistance = 70;
+
+    document.addEventListener('mousemove', function(e){
+      if(lastX !== null){
+        var dx = e.clientX - lastX, dy = e.clientY - lastY;
+        if((dx * dx + dy * dy) < minDistance * minDistance) return;
+      }
+      if(Math.random() < 0.4) return;
+
+      lastX = e.clientX; lastY = e.clientY;
+
+      var fleck = document.createElement('div');
+      fleck.className = 'ink-fleck';
+      fleck.style.left = (e.clientX + (Math.random() * 6 - 3)) + 'px';
+      fleck.style.top = (e.clientY + (Math.random() * 6 - 3)) + 'px';
+      document.body.appendChild(fleck);
+      fleck.addEventListener('animationend', function(){ fleck.remove(); });
+    });
+  })();
+</script>
+
+<script>
+  /* ---------- CIPHER SIGNATURE IN FOOTER ---------- */
+  (function(){
+    var el = document.getElementById('cipher-mark');
+    if(!el) return;
+    var shift = parseInt(el.getAttribute('data-shift'), 10) || 0;
+    var cipher = el.getAttribute('data-cipher') || '';
+    var revealed = false;
+
+    function decode(str, n){
+      return str.replace(/[a-zA-Z]/g, function(c){
+        var base = c === c.toUpperCase() ? 65 : 97;
+        return String.fromCharCode(((c.charCodeAt(0) - base - n + 26) % 26) + base);
+      });
+    }
+
+    function toggle(){
+      revealed = !revealed;
+      el.textContent = revealed ? decode(cipher, shift) : cipher;
+      el.classList.toggle('revealed', revealed);
+    }
+
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+    });
+  })();
+</script>
+
+<script>
+  /* ---------- DAILY ALMANAC QUOTE STRIP ---------- */
+  (function(){
+    var el = document.getElementById('almanac-quote');
+    if(!el) return;
+
+    var quotes = [
+      "\u201CA smooth sea never made a skilled sailor.\u201D",
+      "\u201CThe best way to predict the future is to build it.\u201D",
+      "\u201CSlow and steady wins the printing race.\u201D",
+      "\u201CDone is better than perfect \u2014 ship the edition.\u201D",
+      "\u201CGood work, like good ink, needs time to set.\u201D",
+      "\u201CEvery expert was once a beginner with a deadline.\u201D",
+      "\u201CSmall daily improvements compound into big front pages.\u201D",
+      "\u201CBuild quietly. Let the work make the noise.\u201D"
+    ];
+
+    var now = new Date();
+    var start = new Date(now.getFullYear(), 0, 0);
+    var diff = now - start;
+    var dayOfYear = Math.floor(diff / 86400000);
+    var index = dayOfYear % quotes.length;
+
+    el.textContent = quotes[index];
+  })();
+</script>
+
+<script>
   /* ---------- KEYBOARD SHORTCUTS: T = TOP, G+LETTER = SECTION ---------- */
   (function(){
     var toast = document.getElementById('shortcut-toast');
@@ -2130,5 +2251,6 @@
     });
   })();
 </script>
+
 </body>
 </html>
