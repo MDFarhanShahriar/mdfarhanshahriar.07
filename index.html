@@ -224,6 +224,47 @@
   @media (max-width:900px){ .fold-crease{display:none;} }
   @media print{ .fold-crease{display:none;} }
 
+  /* ---------- WEATHER-STAINED CORNER ---------- */
+  .water-stain{
+    position:fixed;top:-40px;left:-40px;width:220px;height:220px;
+    z-index:1996;pointer-events:none;
+    background:
+      radial-gradient(ellipse 70% 55% at 30% 25%, rgba(120,95,50,0.16) 0%, rgba(120,95,50,0) 60%),
+      radial-gradient(ellipse 55% 65% at 45% 40%, rgba(120,95,50,0.10) 0%, rgba(120,95,50,0) 65%),
+      radial-gradient(ellipse 40% 40% at 20% 55%, rgba(90,70,35,0.13) 0%, rgba(90,70,35,0) 70%);
+    mix-blend-mode:multiply;
+    transform:rotate(-6deg);
+  }
+  html[data-theme="light"] .water-stain{
+    background:
+      radial-gradient(ellipse 70% 55% at 30% 25%, rgba(120,95,50,0.22) 0%, rgba(120,95,50,0) 60%),
+      radial-gradient(ellipse 55% 65% at 45% 40%, rgba(120,95,50,0.14) 0%, rgba(120,95,50,0) 65%),
+      radial-gradient(ellipse 40% 40% at 20% 55%, rgba(90,70,35,0.18) 0%, rgba(90,70,35,0) 70%);
+  }
+  @media (max-width:700px){ .water-stain{width:140px;height:140px;top:-26px;left:-26px;} }
+  @media print{ .water-stain{display:none;} }
+
+  /* ---------- KEYBOARD SHORTCUT TOAST ---------- */
+  #shortcut-toast{
+    position:fixed;left:50%;bottom:30px;z-index:2800;
+    transform:translate(-50%,10px);
+    background:var(--ink);color:#e9dcc0;
+    border:1px solid var(--gold);border-radius:4px;
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
+    letter-spacing:0.06em;text-transform:uppercase;
+    padding:8px 16px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .25s ease,transform .25s ease,visibility .25s ease;
+    box-shadow:0 4px 14px rgba(0,0,0,0.3);
+  }
+  html[data-theme="light"] #shortcut-toast{background:#2a2016;color:#f0e6ce;}
+  #shortcut-toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);}
+  #shortcut-toast kbd{
+    border:1px solid rgba(233,220,192,0.4);border-radius:3px;
+    padding:0 5px;margin:0 2px;font-size:0.7rem;
+  }
+  @media print{ #shortcut-toast{display:none !important;} }
+
   /* ---------- PAGE-TURN NAV TRANSITION ---------- */
   .page-turn{
     position:fixed;inset:0;z-index:2600;pointer-events:none;
@@ -582,6 +623,16 @@
   .hero-meta div{margin-bottom:10px;}
   .hero-meta strong{color:var(--text);display:block;font-size:0.85rem;}
   .cta-row{margin-top:26px;display:flex;gap:14px;flex-wrap:wrap;}
+  .print-hint{
+    margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
+    color:var(--muted);letter-spacing:0.02em;
+  }
+  .print-hint kbd{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;
+    border:1px solid var(--rule);border-radius:3px;
+    padding:1px 5px;color:var(--text);background:var(--surface);
+  }
+  @media print{ .print-hint{display:none;} }
   .jump-line{
     margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;
     font-style:italic;color:var(--muted);
@@ -849,6 +900,7 @@
 
 <div class="press-sweep" aria-hidden="true"></div>
 <div class="fold-crease" aria-hidden="true"></div>
+<div class="water-stain" aria-hidden="true"></div>
 <div class="page-turn" id="page-turn" aria-hidden="true"></div>
 
 <button id="back-to-top" type="button" aria-label="Return to top">
@@ -860,6 +912,8 @@
     </svg>
   </span>
 </button>
+
+<div id="shortcut-toast" role="status" aria-live="polite"></div>
 
 <div id="loading-screen" role="status" aria-label="Loading">
   <div class="stamp-wrap">
@@ -907,6 +961,7 @@
         <a class="btn" href="#contact">Get in touch</a>
         <button class="btn" id="download-pdf-btn" type="button">Download the Full Edition (PDF) ↓</button>
       </div>
+      <div class="print-hint">Prefers print? Try <kbd>Ctrl/Cmd</kbd> + <kbd>P</kbd></div>
       <div class="jump-line">Continued below, "The Front Page" →</div>
     </div>
     <div>
@@ -2002,5 +2057,78 @@
   })();
 </script>
 
+<script>
+  /* ---------- KEYBOARD SHORTCUTS: T = TOP, G+LETTER = SECTION ---------- */
+  (function(){
+    var toast = document.getElementById('shortcut-toast');
+    var backToTop = document.getElementById('back-to-top');
+    var sectionMap = {
+      a: { id: 'about', label: 'About' },
+      v: { id: 'ventures', label: 'Ventures' },
+      b: { id: 'briefs', label: 'In Brief' },
+      e: { id: 'education', label: 'Education' },
+      s: { id: 'skills', label: 'Skills' },
+      c: { id: 'contact', label: 'Contact' }
+    };
+    var awaitingSection = false;
+    var awaitTimer = null;
+    var toastTimer = null;
+
+    function showToast(html, duration){
+      if(!toast) return;
+      toast.innerHTML = html;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, duration || 1400);
+    }
+
+    function isTypingContext(target){
+      if(!target) return false;
+      var tag = target.tagName ? target.tagName.toLowerCase() : '';
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+    }
+
+    function jumpToSection(id, label){
+      var link = document.querySelector('nav.section-nav a[href="#' + id + '"]');
+      var target = document.getElementById(id);
+      if(link){ link.click(); }
+      else if(target){ target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      showToast('→ ' + label);
+    }
+
+    document.addEventListener('keydown', function(e){
+      if(e.metaKey || e.ctrlKey || e.altKey) return;
+      if(isTypingContext(e.target)) return;
+      var key = e.key.toLowerCase();
+
+      if(awaitingSection){
+        clearTimeout(awaitTimer);
+        awaitingSection = false;
+        var section = sectionMap[key];
+        if(section){ jumpToSection(section.id, section.label); }
+        else { toast && toast.classList.remove('show'); }
+        return;
+      }
+
+      if(key === 'g'){
+        awaitingSection = true;
+        showToast('G, then <kbd>A</kbd>bout <kbd>V</kbd>entures <kbd>B</kbd>rief <kbd>E</kbd>du <kbd>S</kbd>kills <kbd>C</kbd>ontact', 2600);
+        awaitTimer = setTimeout(function(){ awaitingSection = false; }, 2200);
+        return;
+      }
+
+      if(key === 't'){
+        if(backToTop){ backToTop.click(); }
+        else { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        showToast('↑ Top');
+        return;
+      }
+
+      if(key === '?'){
+        showToast('<kbd>T</kbd> Top &nbsp; <kbd>G</kbd> then a letter → jump to section', 2600);
+      }
+    });
+  })();
+</script>
 </body>
 </html>
