@@ -1844,16 +1844,6 @@
         });
       }
 
-      if(data.briefs.length){
-        ornament();
-        heading('In Brief', 'Community & activity');
-        data.briefs.forEach(function(b){
-          subheading(b.heading);
-          if(b.body) body(b.body, { size:9 });
-          y += 4;
-        });
-      }
-
       if(data.education.length){
         ornament();
         heading('Education & Standing', 'Academic record');
@@ -1864,11 +1854,24 @@
         });
       }
 
-      if(data.skills.length){
-        // Force Skills (and, following it, Contact) onto a fresh page, so
+      if(data.briefs.length || data.skills.length){
+        // Force In Brief, Skills, and Contact onto a fresh page together, so
         // Education stays complete on its own page rather than splitting.
         doc.addPage();
         y = margin;
+      }
+
+      if(data.briefs.length){
+        heading('In Brief', 'Community & activity');
+        data.briefs.forEach(function(b){
+          subheading(b.heading);
+          if(b.body) body(b.body, { size:9 });
+          y += 4;
+        });
+      }
+
+      if(data.skills.length){
+        ornament();
         heading('Skills', 'By category');
         data.skills.forEach(function(s){
           subheading(s.heading);
