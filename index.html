@@ -4,24 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MD. Farhan Shahriar — Editor, Builder, Photographer</title>
-<meta name="description" content="MD. Farhan Shahriar is a Jashore, Bangladesh-based editor, web builder, and photographer running four ventures: a Bengali news portal, a web design agency, a photography studio, and a synced watch-party app.">
+<meta name="description" content="Jashore-based editor, web builder &amp; photographer behind four ventures: a Bengali news portal, a design agency, a photo studio, and a watch-party app.">
 <meta name="keywords" content="MD. Farhan Shahriar, Jashore Bangladesh, web developer, photographer, Bengali news portal, Dainik Anulipi, Optiqo, portfolio">
 <meta name="author" content="MD. Farhan Shahriar">
-<link rel="canonical" href="./">
+<link rel="canonical" href="https://mdfarhanshahriar.github.io/">
 
-<link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MD. Farhan Shahriar">
 <meta property="og:title" content="MD. Farhan Shahriar — Editor, Builder, Photographer">
 <meta property="og:description" content="Four ventures, one small desk in Jashore: a Bengali news portal, a web design agency, a photography studio, and a synced watch-party app.">
-<meta property="og:image" content="preview.png">
+<meta property="og:image" content="https://mdfarhanshahriar.github.io/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MD. Farhan Shahriar — Editor, Builder, Photographer">
+<meta property="og:url" content="https://mdfarhanshahriar.github.io/">
 <meta property="og:locale" content="en_US">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MD. Farhan Shahriar — Editor, Builder, Photographer">
 <meta name="twitter:description" content="Four ventures, one small desk in Jashore: a Bengali news portal, a web design agency, a photography studio, and a synced watch-party app.">
-<meta name="twitter:image" content="preview.png">
+<meta name="twitter:image" content="https://mdfarhanshahriar.github.io/preview.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -624,6 +632,12 @@
   .hero-portrait img{
     width:100%;aspect-ratio:4/5;object-fit:cover;display:block;
     filter:grayscale(1) sepia(0.25) contrast(1.05);
+    opacity:0;transition:opacity 0.7s ease;
+    background:var(--surface-2);
+  }
+  .hero-portrait img.loaded{opacity:1;}
+  @media (prefers-reduced-motion: reduce){
+    .hero-portrait img{transition:none;opacity:1;}
   }
   .photo-caption{
     display:block;margin-top:8px;font-family:'IBM Plex Mono',monospace;
@@ -997,7 +1011,7 @@
     </div>
     <div>
       <div class="hero-portrait">
-        <img src="my-photo.png" alt="MD. Farhan Shahriar" loading="lazy">
+        <img src="my-photo.png" alt="MD. Farhan Shahriar" loading="lazy" id="hero-photo">
         <span class="photo-caption">MD. Farhan Shahriar</span>
       </div>
       <div class="hero-meta">
@@ -2148,6 +2162,21 @@
     el.addEventListener('keydown', function(e){
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
     });
+  })();
+</script>
+
+<script>
+  /* ---------- HERO PHOTO FADE-IN ---------- */
+  (function(){
+    var img = document.getElementById('hero-photo');
+    if(!img) return;
+    function reveal(){ img.classList.add('loaded'); }
+    if(img.complete && img.naturalWidth > 0){
+      reveal();
+    } else {
+      img.addEventListener('load', reveal);
+      img.addEventListener('error', reveal);
+    }
   })();
 </script>
 
