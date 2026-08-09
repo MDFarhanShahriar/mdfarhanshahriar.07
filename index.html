@@ -1117,7 +1117,7 @@
       </div>
       <div class="brief">
         <h4>Dainik Abhaynagar</h4>
-        <p>Intern — computer operations and newspaper makeup, learning the print side of the trade.</p>
+        <p>Former Intern — computer operations and newspaper makeup, learning the print side of the trade.</p>
       </div>
       <div class="brief">
         <h4>Bangladesh Scouts — Khulna Region</h4>
@@ -1525,6 +1525,13 @@
         };
       });
 
+      data.briefs = Array.prototype.map.call(document.querySelectorAll('#briefs .brief'), function(card){
+        return {
+          heading: text(card.querySelector('h4')),
+          body: text(card.querySelector('p'))
+        };
+      });
+
       data.education = Array.prototype.map.call(document.querySelectorAll('#education .credential-card'), function(card){
         var dl = card.querySelectorAll('dl > div');
         var rows = Array.prototype.map.call(dl, function(row){
@@ -1833,6 +1840,16 @@
             doc.setLineWidth(1.4);
             doc.line(margin - 8, entryStartY, margin - 8, y - 7);
           }
+          y += 4;
+        });
+      }
+
+      if(data.briefs.length){
+        ornament();
+        heading('In Brief', 'Community & activity');
+        data.briefs.forEach(function(b){
+          subheading(b.heading);
+          if(b.body) body(b.body, { size:9 });
           y += 4;
         });
       }
