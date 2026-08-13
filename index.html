@@ -446,8 +446,9 @@
     animation:press-paper-travel 2.6s cubic-bezier(.45,0,.4,1) infinite;
   }
   .press-paper{
-    fill:#e9dab3;stroke:#8a6d3b;stroke-width:1.2;
+    fill:#e9dab3;stroke:#6b5226;stroke-width:1.6;
     transform:rotate(-1.3deg);transform-origin:70px 102px;
+    filter:url(#paper-grain) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.45));
   }
   .press-paper-stain{pointer-events:none;}
   .press-print-content{
@@ -455,10 +456,10 @@
     animation:press-print-reveal 2.6s cubic-bezier(.45,0,.4,1) infinite;
   }
   .press-imprint{
-    font-family:'Fraunces',serif;font-weight:700;font-size:9px;
-    fill:var(--gold);
+    font-family:'Fraunces',serif;font-weight:700;font-size:10px;
+    fill:#2e2013;
   }
-  .press-print-line{stroke:var(--gold);stroke-width:1;opacity:0.7;}
+  .press-print-line{stroke:#2e2013;stroke-width:1.2;opacity:0.75;}
   .press-screw{fill:var(--gold);opacity:0.85;}
   .press-platen{fill:var(--gold);}
   .press-bar{stroke:var(--gold);stroke-width:2.5;stroke-linecap:round;}
@@ -491,8 +492,8 @@
     95%,100%{transform:translateX(74px) rotate(0deg);opacity:0;}
   }
   @keyframes press-print-reveal{
-    0%,64%{opacity:0;}
-    67%,100%{opacity:1;}
+    0%,55%{opacity:0;}
+    62%,100%{opacity:1;}
   }
   @keyframes press-carriage-cycle{
     0%,25%{transform:translateY(0);}
@@ -1109,7 +1110,7 @@
       </g>
 
       <g class="press-paper-group">
-        <rect class="press-paper" x="38" y="94" width="64" height="16" rx="1" filter="url(#paper-grain)"/>
+        <rect class="press-paper" x="38" y="94" width="64" height="16" rx="1"/>
         <rect class="press-paper-stain" x="38" y="94" width="64" height="16" rx="1" fill="url(#paper-stain)"/>
         <g class="press-print-content">
           <text class="press-imprint" x="70" y="103" text-anchor="middle">MFS</text>
