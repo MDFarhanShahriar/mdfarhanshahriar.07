@@ -7,13 +7,13 @@
 <meta name="description" content="Jashore-based editor, web builder &amp; photographer behind four ventures: a Bengali news portal, its e-paper edition, a design agency, and a photo studio.">
 <meta name="keywords" content="MD. Farhan Shahriar, Jashore Bangladesh, web developer, photographer, Bengali news portal, Dainik Anulipi, Optiqo, portfolio">
 <meta name="author" content="MD. Farhan Shahriar">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#181310" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F7EFD8" media="(prefers-color-scheme: light)">
 <link rel="canonical" href="https://mdfarhanshahriar.github.io/">
 
-<link rel="icon" href="favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MD. Farhan Shahriar">
@@ -23,13 +23,42 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="MD. Farhan Shahriar — Editor, Builder, Photographer">
+<meta property="og:image:type" content="image/png">
 <meta property="og:url" content="https://mdfarhanshahriar.github.io/">
 <meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="bn_BD">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MD. Farhan Shahriar — Editor, Builder, Photographer">
 <meta name="twitter:description" content="Four ventures, one small desk in Jashore: a Bengali news portal, its e-paper edition, a web design agency, and a photography studio.">
 <meta name="twitter:image" content="https://mdfarhanshahriar.github.io/preview.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "MD. Farhan Shahriar",
+  "url": "https://mdfarhanshahriar.github.io/",
+  "jobTitle": "Editor, Web Developer & Photographer",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Jashore",
+    "addressCountry": "BD"
+  },
+  "email": "mailto:mdfarhanshah7002@gmail.com",
+  "sameAs": [
+    "https://dainikanulipi.github.io/da/",
+    "https://farhansphotography.github.io/fp/",
+    "https://optiqoweb.github.io/optiqoweb/",
+    "https://www.instagram.com/mdfarhanshahriar.07",
+    "https://www.facebook.com/mdfarhanshahriar.07"
+  ],
+  "worksFor": [
+    { "@type": "Organization", "name": "Dainik Anulipi", "url": "https://dainikanulipi.github.io/da/" },
+    { "@type": "Organization", "name": "Optiqo Web", "url": "https://optiqoweb.github.io/optiqoweb/" }
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -836,6 +865,11 @@
   .brief{border-top:2px solid var(--gold);padding-top:14px;}
   .brief h4{font-family:'Fraunces',serif;margin:0 0 6px;font-size:1.05rem;font-weight:600;}
   .brief p{margin:0;font-size:0.88rem;color:var(--muted);}
+  .brief p a{
+    font-family:'IBM Plex Mono',monospace;font-size:0.76rem;color:var(--gold);
+    text-decoration:none;display:inline-block;margin-top:6px;
+  }
+  .brief p a:hover{text-decoration:underline;}
   @media (max-width:720px){.brief-list{grid-template-columns:1fr;}}
 
   /* ---------- TICKER ---------- */
@@ -1172,8 +1206,8 @@
 <section class="hero torn-edge">
   <div class="wrap hero-grid">
     <div>
-      <h1>Three ventures, one small desk in Jashore.</h1>
-      <p>Md. Farhan Shahriar co-runs a Bengali news portal, a web design agency, and a photography studio — mostly built solo, with static sites, Google Sheets, and Apps Script doing the heavy lifting.</p>
+      <h1>Four ventures, one small desk in Jashore.</h1>
+      <p>Md. Farhan Shahriar runs a photography studio, a Bengali news portal with its e-paper edition, and a web design agency — mostly built solo, with static sites, Google Sheets, and Apps Script doing the heavy lifting.</p>
       <div class="cta-row">
         <a class="btn primary" href="#ventures">Read the front page →</a>
         <a class="btn" href="#contact">Get in touch</a>
@@ -1292,6 +1326,10 @@
       <div class="brief">
         <h4>PRM &amp; ICT Taskforce</h4>
         <p>Since early 2026 — Photography Team member, contributing to public relations, media, and ICT initiatives.</p>
+      </div>
+      <div class="brief">
+        <h4>Anik Adhikari — Portfolio Site</h4>
+        <p>Designed and built a personal portfolio site for Anik Adhikari, co-founder and Publisher &amp; Editor of Dainik Anulipi.<br><a href="https://optiqoweb.github.io/anik-adhikary/" target="_blank" rel="noopener">Visit optiqoweb.github.io/anik-adhikary →</a></p>
       </div>
     </div>
   </div>
@@ -2032,7 +2070,10 @@
       }
 
       if(data.education.length){
-        ornament();
+        // Force Education onto a fresh page, so it starts cleanly on page 2
+        // instead of continuing wherever Ventures happened to end.
+        doc.addPage();
+        y = margin;
         heading('Education & Standing', 'Academic record');
         data.education.forEach(function(e){
           subheading(e.heading);
